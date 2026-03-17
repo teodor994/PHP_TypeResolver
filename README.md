@@ -37,8 +37,6 @@ The `TypeResolver` processes `PhpVariable` objects by inspecting their associate
 
 ## Project Structure
 
-## 🏗 Project Structure
-
 The project is organized following standard Gradle conventions within the `com.analysis` package:
 
 ```text
