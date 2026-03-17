@@ -20,6 +20,56 @@ class TypeResolverTest {
         assertEquals("Logger", result.toString());
     }
 
+    @Test
+    void testStandardType() {
+        // Standard Type: /** @var User */ for $user → should return User.
+        TypeResolver resolver = new TypeResolver();
+        PhpVariable variable = new MockVariable("$user", "User");
+        PhpType result = resolver.inferTypeFromDoc(variable);
+        assertEquals("User", result.toString());
+    }
+
+    @Test
+    void testUnionType() {
+        // Union Type: /** @var string|int */ for $id → should return a UnionType of string and int.
+        TypeResolver resolver = new TypeResolver();
+        PhpVariable variable = new MockVariable("$id", "string|int");
+        PhpType result = resolver.inferTypeFromDoc(variable);
+        assertEquals("string|int", result.toString());
+    }
+
+    @Test
+    void testNameMismatch() {
+        // Name Mismatch: /** @var Admin $adm */ for variable $guest → should return mixed.
+        TypeResolver resolver = new TypeResolver();
+        PhpVariable variable = new MockVariable("$guest", "Admin $adm");
+        PhpType result = resolver.inferTypeFromDoc(variable);
+        assertEquals("mixed", result.toString());
+    }
+
+    @Test
+    void testFallbackNoDocBlock() {
+        // Fallback: If no DocBlock exists -> mixed.
+        TypeResolver resolver = new TypeResolver();
+        PhpVariable variable = new PhpVariable() {
+            @Override public String getName() { return "$any"; }
+            @Override public PhpDocBlock getDocBlock() { return null; }
+        };
+        PhpType result = resolver.inferTypeFromDoc(variable);
+        assertEquals("mixed", result.toString());
+    }
+
+    @Test
+    void testMultipleTags() {
+        // Multiple Tags: If a DocBlock has /** @var int $id */ and /** @var string $name */, return string for $name.
+        TypeResolver resolver = new TypeResolver();
+        List<String> tags = Arrays.asList("int $id", "string $name");
+        PhpVariable variable = new MockMultiVariable("$name", tags);
+
+        PhpType result = resolver.inferTypeFromDoc(variable);
+        assertEquals("string", result.toString());
+    }
+
     static class MockVariable implements PhpVariable {
         private String name;
         private String tagValue;
